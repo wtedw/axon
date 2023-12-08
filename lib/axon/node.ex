@@ -15,6 +15,7 @@ defmodule Axon.Node do
     :opts,
     :op_name,
     :stacktrace,
-    :forward
+    :forward,
+    :wrapped_fn
   ]
 end

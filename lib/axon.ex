@@ -398,7 +398,7 @@ defmodule Axon do
 
   You may specify the parameter shape as either a static shape or
   as function of the inputs to the given layer. If you specify the
-  parameter shape as a function, it will be given the 
+  parameter shape as a function, it will be given the
 
   ## Options
 
@@ -3625,7 +3625,7 @@ defmodule Axon do
 
   This can be used to "intercept" and alter the forward pass of a
   layer. For example, we can use this function to implement Low-Rank
-  Adaptation (LoRA) by wrapping the forward pass of QKV layers in a 
+  Adaptation (LoRA) by wrapping the forward pass of QKV layers in a
   transformer:
 
       Axon.map_nodes(model, fn
@@ -3650,10 +3650,10 @@ defmodule Axon do
         dropout = opts[:dropout]
         scaling = opts[:scaling]
         mode = opts[:mode]
-        
+
         x = input
         wx = forward.(input, w, mode: mode)
-        
+
         {x, next_key} =
           case mode do
             :inference -> {x, :ignored}
@@ -3712,26 +3712,15 @@ defmodule Axon do
     key = opts[:injected_key]
     layer_opts = opts[:layer_opts] || []
 
-    new_opts = Keyword.merge(old_opts, layer_opts, fn _, v1, _ -> v1 end)
-
+    new_opts = Keyword.merge(old_opts, [layer_opts: layer_opts], fn _, v1, _ -> v1 end)
     injected = param(key, {:map, injected_params})
-
-    {:arity, arity} = Function.info(old_forward, :arity)
-    
-    wrapped_fn =
-      fn args ->
-        {inputs, [opts]} = Enum.split(args, arity - 1)
-        {inputs, [injected]} = Enum.split(inputs, arity - 2)
-
-        apply(fun, [inputs, injected, old_forward, opts])
-      end
 
     %{
       axon_node
-      | forward: wrapped_fn,
+      | wrapped_fn: fun,
         parameters: old_parameters ++ [injected],
         args: old_args ++ [:parameter],
-        opts: new_opts
+        opts: new_opts ++ [layer_opts: layer_opts]
     }
   end
 

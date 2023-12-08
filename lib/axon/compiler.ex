@@ -722,7 +722,8 @@ defmodule Axon.Compiler do
            hooks: hooks,
            op_name: op_name,
            stacktrace: stacktrace,
-           forward: forward
+           forward: forward,
+           wrapped_fn: wrapped_fn
          },
          nodes,
          cache_and_counts,
@@ -759,6 +760,7 @@ defmodule Axon.Compiler do
         op,
         op_name,
         forward,
+        wrapped_fn,
         parent_ids,
         name,
         args,
@@ -840,6 +842,7 @@ defmodule Axon.Compiler do
          op,
          op_name,
          forward,
+         wrapped_fn,
          parent_ids,
          name,
          args,
@@ -923,7 +926,8 @@ defmodule Axon.Compiler do
       # in Axon.Layers. The implication of this is that every function which
       # can be invoked as a layer must have a definition in Axon.Layers even
       # if there is a distinction (e.g. with activations)
-      result = apply_layer(name, op, forward, args, layer_stacktrace, fn_stacktrace, op_name)
+      result =
+        apply_layer(name, op, forward, wrapped_fn, args, layer_stacktrace, fn_stacktrace, op_name)
 
       result =
         case result do
@@ -961,9 +965,20 @@ defmodule Axon.Compiler do
     end
   end
 
-  defp apply_layer(name, op, forward, args, layer_stacktrace, fn_stacktrace, op_name) do
+  defp apply_layer(name, op, forward, wrapped_fn, args, layer_stacktrace, fn_stacktrace, op_name) do
     try do
-      result = apply(forward, args)
+      result =
+        if wrapped_fn == nil do
+          apply(forward, args)
+        else
+          {inputs, [opts]} = Enum.split(args, -1)
+          {inputs, [injected]} = Enum.split(inputs, -1)
+          {wrapped_opts, opts} = Keyword.pop(opts, :layer_opts)
+          wrapped_opts = Keyword.put(wrapped_opts, :mode, Keyword.get(opts, :mode))
+
+          forward_res = apply(forward, inputs ++ [opts])
+          apply(wrapped_fn, [forward_res, injected, wrapped_opts])
+        end
 
       case result do
         out when is_tuple(out) ->
