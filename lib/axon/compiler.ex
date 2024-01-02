@@ -1076,7 +1076,7 @@ defmodule Axon.Compiler do
             init_param(parent_name, child_param, acc, parent_shapes, dtype, keys[layer_id])
           end)
 
-        %Axon.Parameter{name: name, shape: shape, initializer: initializer} ->
+        %Axon.Parameter{name: name, type: type, shape: shape, initializer: initializer} ->
           shape =
             case shape do
               shape when is_function(shape) ->
@@ -1089,7 +1089,7 @@ defmodule Axon.Compiler do
                 raise "unsupported parameter shape, parameter shape should be a static tuple, a function, or a composite, got #{inspect(other)}"
             end
 
-          apply_initializer(layer_id, initializer, name, shape, dtype, keys)
+          apply_initializer(layer_id, initializer, name, shape, type, keys)
       end
 
     Map.put(layer_params, name, params)

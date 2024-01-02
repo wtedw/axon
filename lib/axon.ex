@@ -390,7 +390,7 @@ defmodule Axon do
 
   You may specify the parameter shape as either a static shape or
   as function of the inputs to the given layer. If you specify the
-  parameter shape as a function, it will be given the 
+  parameter shape as a function, it will be given the
 
   ## Options
 
@@ -1910,6 +1910,7 @@ defmodule Axon do
     opts =
       Keyword.validate!(opts, [
         :name,
+        type: {:f, 32},
         gamma_initializer: :glorot_uniform,
         beta_initializer: :zeros,
         channel_index: -1,
@@ -1921,8 +1922,8 @@ defmodule Axon do
     gamma_shape = &Axon.Shape.norm_param(&1, channel_index)
     beta_shape = &Axon.Shape.norm_param(&1, channel_index)
 
-    gamma = param("gamma", gamma_shape, initializer: opts[:gamma_initializer])
-    beta = param("beta", beta_shape, initializer: opts[:beta_initializer])
+    gamma = param("gamma", gamma_shape, initializer: opts[:gamma_initializer], type: opts[:type])
+    beta = param("beta", beta_shape, initializer: opts[:beta_initializer], type: opts[:type])
 
     layer(norm, [x, gamma, beta],
       name: opts[:name],
@@ -3063,11 +3064,11 @@ defmodule Axon do
   """
   @doc type: :linear
   def embedding(%Axon{} = x, vocab_size, embedding_size, opts \\ []) do
-    opts = Keyword.validate!(opts, [:name, kernel_initializer: :uniform])
+    opts = Keyword.validate!(opts, [:name, type: {:f, 32}, kernel_initializer: :uniform])
 
     kernel_shape = &Axon.Shape.embedding_kernel(&1, vocab_size, embedding_size)
 
-    kernel = param("kernel", kernel_shape, initializer: opts[:kernel_initializer])
+    kernel = param("kernel", kernel_shape, initializer: opts[:kernel_initializer], type: opts[:type])
 
     layer(:embedding, [x, kernel], name: opts[:name], op_name: :embedding)
   end
