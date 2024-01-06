@@ -795,6 +795,7 @@ defmodule Axon do
       Keyword.validate!(opts, [
         :name,
         :activation,
+        type: {:f, 32},
         kernel_initializer: :glorot_uniform,
         bias_initializer: :zeros,
         use_bias: true
@@ -803,11 +804,11 @@ defmodule Axon do
     kernel_shape = &Axon.Shape.dense_kernel(&1, units)
     bias_shape = &Axon.Shape.dense_bias(&1, units)
 
-    kernel = param("kernel", kernel_shape, initializer: opts[:kernel_initializer])
+    kernel = param("kernel", kernel_shape, initializer: opts[:kernel_initializer], type: opts[:type])
 
     {inputs, op} =
       if opts[:use_bias] do
-        bias = param("bias", bias_shape, initializer: opts[:bias_initializer])
+        bias = param("bias", bias_shape, initializer: opts[:bias_initializer], type: opts[:type])
         {[x, kernel, bias], :dense}
       else
         {[x, kernel], :dense}
